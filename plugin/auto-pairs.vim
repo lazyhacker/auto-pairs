@@ -215,12 +215,31 @@ func! AutoPairsInsert(key)
     let m = matchstr(afterline, '^\v\s*\zs\V'.close)
     if len(ms) > 0
       " process the open pair
-      
+
       " remove inserted pair
-      " eg: if the pairs include < > and  <!-- --> 
-      " when <!-- is detected the inserted pair < > should be clean up 
+      " eg: if the pairs include < > and  <!-- -->
+      " when <!-- is detected the inserted pair < > should be clean up
       let target = ms[1]
       let openPair = ms[2]
+
+      " --- START OF MODIFICATION ---
+      " Specific handling for the '{' opening pair:
+      " Only auto-insert '}' if there is a space or End-of-Line (EOL) after the cursor.
+      if openPair == '{'
+        " 'afterline' contains the rest of the current line after the cursor.
+        " If 'afterline' is empty, it means the cursor is at the EOL.
+        " If 'afterline' is not empty and its first character is NOT a space,
+        " then the condition to prevent auto-insertion is met.
+        if !empty(afterline) && afterline[0] != ' '
+          " In this case, we simply return the original key ('{').
+          " This prevents the rest of the function from executing,
+          " effectively stopping the automatic insertion of the matching '}'.
+          return a:key
+        end
+      end
+      " --- END OF MODIFICATION ---
+
+
       if len(openPair) == 1 && m == openPair
         break
       end
@@ -499,7 +518,7 @@ func! AutoPairsInit()
       let opt['multiline'] = 0
     end
     let m = matchlist(close, '\v(.*)//(.*)$')
-    if len(m) > 0 
+    if len(m) > 0
       if m[2] =~ 'n'
         let opt['mapclose'] = 0
       end
